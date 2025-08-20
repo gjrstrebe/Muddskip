@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drywall Bottleneck Model</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background */
+            color: #e2e8f0; /* Light text */
+        }
+        .container {
+            max-width: 90%;
+            margin: auto;
+            padding: 2rem;
+        }
+        .card {
+            background-color: #2d3748; /* Darker card background */
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+        input[type="number"] {
+            background-color: #4a5568;
+            border-color: #636b77;
+            color: #cbd5e0;
+        }
+        .button {
+            background-color: #4299e1;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #3182ce;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8 flex items-center justify-center min-h-screen">
+
+<div class="container">
+    <div class="card max-w-4xl mx-auto">
+        <h1 class="text-3xl sm:text-4xl font-bold text-center mb-6">Drywall Bottleneck Cost Justification</h1>
+        <p class="text-center text-lg mb-8 text-gray-400">
+            Model the financial impact of adopting a faster drywall mud, reducing project timelines and saving on overhead costs.
+        </p>
+
+        <!-- Inputs Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="p-4 rounded-lg bg-gray-600/30">
+                <label for="sqft" class="block text-sm font-medium mb-1">Total Square Footage</label>
+                <input type="number" id="sqft" value="6300" min="0" class="w-full rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="p-4 rounded-lg bg-gray-600/30">
+                <label for="drywall_days_standard" class="block text-sm font-medium mb-1">Total Drywall Time (in days)</label>
+                <input type="number" id="drywall_days_standard" value="6" min="1" step="0.5" class="w-full rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="p-4 rounded-lg bg-gray-600/30">
+                <label for="cost_standard" class="block text-sm font-medium mb-1">Standard Mud Cost per Sq Ft ($)</label>
+                <input type="number" id="cost_standard" value="0.10" min="0" step="0.01" class="w-full rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="p-4 rounded-lg bg-gray-600/30">
+                <label for="cost_muddskip" class="block text-sm font-medium mb-1">Muddskip Mud Cost per Sq Ft ($)</label>
+                <input type="number" id="cost_muddskip" value="0.15" min="0" step="0.01" class="w-full rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="p-4 rounded-lg bg-gray-600/30">
+                <label for="loan_cost" class="block text-sm font-medium mb-1">Daily Loan Holding Cost ($)</label>
+                <input type="number" id="loan_cost" value="200" min="0" step="1" class="w-full rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="p-4 rounded-lg bg-gray-600/30">
+                <label for="trades_savings" class="block text-sm font-medium mb-1">Daily Trades & Overhead Savings ($)</label>
+                <input type="number" id="trades_savings" value="150" min="0" step="1" class="w-full rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="p-4 rounded-lg bg-gray-600/30">
+                <label for="num_homes" class="block text-sm font-medium mb-1">Number of Homes</label>
+                <input type="number" id="num_homes" value="10" min="1" step="1" class="w-full rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="p-4 rounded-lg bg-gray-600/30">
+                <label for="revenue_per_home" class="block text-sm font-medium mb-1">Average Revenue per Home ($)</label>
+                <input type="number" id="revenue_per_home" value="100000" min="0" step="1000" class="w-full rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+
+        <div class="flex justify-center">
+            <button id="calculate_button" class="button font-bold py-3 px-6 rounded-lg text-lg">Calculate Savings</button>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" class="mt-8 hidden">
+            <h2 class="text-2xl font-semibold text-center mb-6">Financial Impact</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-center">
+                <!-- Standard Method Card -->
+                <div class="p-6 rounded-lg bg-gray-700/50">
+                    <h3 class="text-xl font-bold mb-4">Standard Method</h3>
+                    <div class="space-y-2">
+                        <p>Total Drywall Time: <span id="time_standard" class="font-semibold text-blue-300"></span></p>
+                        <p>Total Mud Cost: <span id="mud_cost_standard" class="font-semibold text-blue-300"></span></p>
+                    </div>
+                </div>
+
+                <!-- Muddskip Method Card -->
+                <div class="p-6 rounded-lg bg-gray-700/50">
+                    <h3 class="text-xl font-bold mb-4">Muddskip Method</h3>
+                    <div class="space-y-2">
+                        <p>Total Drywall Time: <span id="time_muddskip" class="font-semibold text-blue-300"></span></p>
+                        <p>Total Mud Cost: <span id="mud_cost_muddskip" class="font-semibold text-blue-300"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Savings Summary -->
+            <div class="mt-8 p-6 rounded-lg bg-green-900/40 text-center">
+                <h3 class="text-xl font-bold mb-4">Savings Summary per Home</h3>
+                <div class="space-y-4">
+                    <div class="text-lg">
+                        <p class="font-semibold">Time Saved: <span id="time_saved_per_home" class="text-green-300"></span></p>
+                    </div>
+                    <div class="text-left md:text-center space-y-2 text-sm">
+                        <p>+ Loan Holding Savings: <span id="loan_savings_display" class="font-bold text-green-300"></span></p>
+                        <p>+ Trades/Overhead Savings: <span id="trades_savings_display" class="font-bold text-green-300"></span></p>
+                        <p>- Extra Mud Cost: <span id="mud_cost_difference_display" class="font-bold text-red-300"></span></p>
+                    </div>
+                    <div class="text-xl font-bold pt-4">
+                        <p>Total Net Savings: <span id="savings_per_home" class="font-bold text-green-300"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Gain Section -->
+            <div class="mt-4 p-6 rounded-lg bg-purple-900/40 text-center">
+                <h3 class="text-xl font-bold mb-4">Potential Revenue Gain</h3>
+                <div class="text-lg space-y-2">
+                    <p>Total Drywall Days Saved for <span id="num_homes_display_2"></span> Homes: <span id="total_days_saved_display" class="font-bold text-purple-300"></span></p>
+                    <p>Additional Homes Completed: <span id="extra_homes_completed" class="font-bold text-purple-300"></span></p>
+                </div>
+                <div class="text-xl font-bold pt-4">
+                    <p>Total Potential Revenue Gain: <span id="revenue_gain_display" class="font-bold text-purple-300"></span></p>
+                </div>
+            </div>
+
+            <div class="mt-4 p-6 rounded-lg bg-green-900/40 text-center">
+                <h3 class="text-xl font-bold mb-4">Total Project Savings</h3>
+                <div class="text-xl font-bold">
+                    <p>Total Savings for <span id="num_homes_display"></span> Homes: <span id="total_savings" class="font-bold text-green-300"></span></p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('calculate_button').addEventListener('click', function() {
+        // Get input values
+        const sqft = parseFloat(document.getElementById('sqft').value);
+        const drywallDaysStandard = parseFloat(document.getElementById('drywall_days_standard').value);
+        const costStandard = parseFloat(document.getElementById('cost_standard').value);
+        const costMuddskip = parseFloat(document.getElementById('cost_muddskip').value);
+        const loanCost = parseFloat(document.getElementById('loan_cost').value);
+        const tradesSavings = parseFloat(document.getElementById('trades_savings').value);
+        const numHomes = parseInt(document.getElementById('num_homes').value, 10);
+        const revenuePerHome = parseFloat(document.getElementById('revenue_per_home').value);
+
+        // Calculations for Standard Method
+        const timeStandard = drywallDaysStandard;
+        const mudCostStandard = sqft * costStandard;
+
+        // Calculations for Muddskip Method
+        const timeMuddskip = drywallDaysStandard * 0.5; // Assumes 50% time savings on drywall
+        const mudCostMuddskip = sqft * costMuddskip;
+
+        // Savings Calculations
+        const timeSavedPerHome = timeStandard - timeMuddskip;
+        const loanSavings = timeSavedPerHome * loanCost;
+        const tradesSavingsTotal = timeSavedPerHome * tradesSavings;
+        const mudCostDifference = mudCostMuddskip - mudCostStandard;
+        
+        const savingsPerHome = (loanSavings + tradesSavingsTotal) - mudCostDifference;
+        const totalSavings = savingsPerHome * numHomes;
+
+        // Revenue Gain Calculations
+        const totalDaysSaved = timeSavedPerHome * numHomes;
+        const extraHomesCompleted = Math.floor(totalDaysSaved / drywallDaysStandard);
+        const potentialRevenue = extraHomesCompleted * revenuePerHome;
+
+        // Display results
+        document.getElementById('time_standard').textContent = `${timeStandard} days`;
+        document.getElementById('mud_cost_standard').textContent = `$${mudCostStandard.toFixed(2)}`;
+        document.getElementById('time_muddskip').textContent = `${timeMuddskip} days`;
+        document.getElementById('mud_cost_muddskip').textContent = `$${mudCostMuddskip.toFixed(2)}`;
+        
+        document.getElementById('time_saved_per_home').textContent = `${timeSavedPerHome} days`;
+        
+        // Detailed breakdown
+        document.getElementById('loan_savings_display').textContent = `$${loanSavings.toFixed(2)}`;
+        document.getElementById('trades_savings_display').textContent = `$${tradesSavingsTotal.toFixed(2)}`;
+        document.getElementById('mud_cost_difference_display').textContent = `$${mudCostDifference.toFixed(2)}`;
+        
+        // Final savings
+        document.getElementById('savings_per_home').textContent = `$${savingsPerHome.toFixed(2)}`;
+        document.getElementById('num_homes_display').textContent = numHomes;
+        document.getElementById('total_savings').textContent = `$${totalSavings.toFixed(2)}`;
+
+        // Display revenue gain
+        document.getElementById('num_homes_display_2').textContent = numHomes;
+        document.getElementById('total_days_saved_display').textContent = `${totalDaysSaved} days`;
+        document.getElementById('extra_homes_completed').textContent = extraHomesCompleted;
+        document.getElementById('revenue_gain_display').textContent = `$${potentialRevenue.toFixed(2)}`;
+
+
+        // Show results section
+        document.getElementById('results').classList.remove('hidden');
+    });
+</script>
+
+</body>
+</html>
+
+
